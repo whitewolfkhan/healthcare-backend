@@ -1,12 +1,14 @@
 require('dotenv').config({ path: require('path').join(__dirname, '../../.env') });
-const { sequelize, User, Patient, Doctor, Department, Appointment, Prescription, LabResult, VitalSign, Medication } = require('../models');
+const { sequelize, User, Patient, Doctor, Department, Appointment, VitalSign, Medication } = require('../models');
 
-const seedData = async () => {
+const seedData = async (standalone = false) => {
   try {
-    await sequelize.authenticate();
-    console.log('Connected to database...');
-    await sequelize.sync({ force: true });
-    console.log('Database synced. Seeding data...');
+    if (standalone) {
+      await sequelize.authenticate();
+      console.log('Connected to database...');
+      await sequelize.sync({ force: true });
+      console.log('Database synced. Seeding data...');
+    }
 
     // Departments
     const departments = await Department.bulkCreate([
@@ -18,6 +20,14 @@ const seedData = async () => {
       { name: 'Dermatology', description: 'Skin, hair, and nail conditions', icon: 'skin' },
       { name: 'Gynecology', description: 'Women health and reproductive system', icon: 'female' },
       { name: 'Ophthalmology', description: 'Eye care and vision', icon: 'eye' },
+      { name: 'ENT (Ear, Nose & Throat)', description: 'Ear, nose, throat disorders', icon: 'ear' },
+      { name: 'Urology', description: 'Urinary tract and reproductive health', icon: 'kidney' },
+      { name: 'Oncology', description: 'Cancer diagnosis and treatment', icon: 'cancer' },
+      { name: 'Psychiatry', description: 'Mental health and disorders', icon: 'brain-mental' },
+      { name: 'Endocrinology', description: 'Hormones, diabetes, thyroid', icon: 'hormone' },
+      { name: 'Gastroenterology', description: 'Digestive system disorders', icon: 'stomach' },
+      { name: 'Pulmonology', description: 'Lung and respiratory diseases', icon: 'lungs' },
+      { name: 'Emergency Medicine', description: '24/7 emergency and trauma care', icon: 'emergency' },
     ]);
     console.log(`Created ${departments.length} departments`);
 
@@ -39,62 +49,65 @@ const seedData = async () => {
     ], { individualHooks: true });
 
     await Doctor.bulkCreate([
-      { userId: doctorUsers[0].id, departmentId: departments[0].id, specialization: 'Cardiologist', licenseNumber: 'BMDC-2024-001', experience: 15, consultationFee: 1500, qualifications: ['MBBS', 'FCPS (Cardiology)', 'MD (Heart)'], bio: 'Expert cardiologist with 15 years of experience in Chattagram.', rating: 4.8 },
-      { userId: doctorUsers[1].id, departmentId: departments[4].id, specialization: 'General Physician', licenseNumber: 'BMDC-2024-002', experience: 10, consultationFee: 800, qualifications: ['MBBS', 'FCPS (Medicine)'], bio: 'Experienced general physician serving Chattagram for over a decade.', rating: 4.6 },
-      { userId: doctorUsers[2].id, departmentId: departments[1].id, specialization: 'Neurologist', licenseNumber: 'BMDC-2024-003', experience: 12, consultationFee: 1200, qualifications: ['MBBS', 'MD (Neurology)'], bio: 'Specialist in neurological disorders.', rating: 4.7 },
-      { userId: doctorUsers[3].id, departmentId: departments[6].id, specialization: 'Gynecologist', licenseNumber: 'BMDC-2024-004', experience: 8, consultationFee: 1000, qualifications: ['MBBS', 'FCPS (Gynecology)'], bio: 'Women health specialist.', rating: 4.9 },
+      { userId: doctorUsers[0].id, departmentId: departments[0].id, specialization: 'Cardiologist', licenseNumber: 'BMDC-2024-001', qualifications: ['MBBS', 'FCPS (Cardiology)', 'MD (Heart)'], experience: 15, bio: 'Expert cardiologist with 15 years of experience in Chattagram.', consultationFee: 1500, availableDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'], availableTimeStart: '09:00:00', availableTimeEnd: '17:00:00', rating: 4.8, clinicName: 'Chittagong Medical College Hospital', clinicCity: 'Chattagram' },
+      { userId: doctorUsers[1].id, departmentId: departments[4].id, specialization: 'General Physician', licenseNumber: 'BMDC-2024-002', qualifications: ['MBBS', 'FCPS (Medicine)'], experience: 10, bio: 'Experienced general physician serving Chattagram for over a decade.', consultationFee: 800, availableDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'], availableTimeStart: '09:00:00', availableTimeEnd: '17:00:00', rating: 4.6, clinicName: 'Park View Hospital', clinicCity: 'Chattagram' },
+      { userId: doctorUsers[2].id, departmentId: departments[1].id, specialization: 'Neurologist', licenseNumber: 'BMDC-2024-003', qualifications: ['MBBS', 'MD (Neurology)'], experience: 12, bio: 'Specialist in neurological disorders.', consultationFee: 1200, availableDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'], availableTimeStart: '09:00:00', availableTimeEnd: '17:00:00', rating: 4.7, clinicName: 'Chevron Clinical', clinicCity: 'Chattagram' },
+      { userId: doctorUsers[3].id, departmentId: departments[6].id, specialization: 'Gynecologist', licenseNumber: 'BMDC-2024-004', qualifications: ['MBBS', 'FCPS (Gynecology)'], experience: 8, bio: 'Women health specialist.', consultationFee: 1000, availableDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'], availableTimeStart: '09:00:00', availableTimeEnd: '17:00:00', rating: 4.9, clinicName: 'Max Hospital', clinicCity: 'Chattagram' },
     ]);
-    console.log(`Created ${doctorUsers.length} doctors`);
+    console.log('Created 4 doctors');
 
     // Patients
     const patientUsers = await User.bulkCreate([
-      { firstName: 'Mohammad', lastName: 'Ali', email: 'patient@healthcare.com', password: 'Patient@1234', role: 'patient', phone: '+8801755555555', isEmailVerified: true },
-      { firstName: 'Ayesha', lastName: 'Siddiqui', email: 'ayesha@healthcare.com', password: 'Patient@1234', role: 'patient', phone: '+8801766666666', isEmailVerified: true },
-      { firstName: 'Rahim', lastName: 'Chowdhury', email: 'rahim@healthcare.com', password: 'Patient@1234', role: 'patient', phone: '+8801777777777', isEmailVerified: true },
+      { firstName: 'Rahim', lastName: 'Uddin', email: 'patient@healthcare.com', password: 'Patient@1234', role: 'patient', phone: '+8801755555555', isEmailVerified: true },
+      { firstName: 'Sumaiya', lastName: 'Akter', email: 'sumaiya@healthcare.com', password: 'Patient@1234', role: 'patient', phone: '+8801766666666', isEmailVerified: true },
+      { firstName: 'Jamal', lastName: 'Hossain', email: 'jamal@healthcare.com', password: 'Patient@1234', role: 'patient', phone: '+8801777777777', isEmailVerified: true },
     ], { individualHooks: true });
 
     const patients = await Patient.bulkCreate([
-      { userId: patientUsers[0].id, dateOfBirth: '1990-05-15', gender: 'male', bloodGroup: 'B+', address: 'Agrabad, Chattagram', city: 'Chattagram', country: 'Bangladesh', height: 172, weight: 70, allergies: ['Penicillin'], chronicConditions: ['Hypertension'] },
-      { userId: patientUsers[1].id, dateOfBirth: '1995-08-22', gender: 'female', bloodGroup: 'A+', address: 'GEC Circle, Chattagram', city: 'Chattagram', country: 'Bangladesh', height: 158, weight: 55 },
-      { userId: patientUsers[2].id, dateOfBirth: '1985-12-10', gender: 'male', bloodGroup: 'O+', address: 'Nasirabad, Chattagram', city: 'Chattagram', country: 'Bangladesh', height: 168, weight: 75 },
+      { userId: patientUsers[0].id, dateOfBirth: '1990-05-15', gender: 'male', bloodGroup: 'B+', address: 'Agrabad, Chattagram', city: 'Chattagram', country: 'Bangladesh', allergies: ['Penicillin'], chronicConditions: ['Hypertension'], height: 172, weight: 70 },
+      { userId: patientUsers[1].id, dateOfBirth: '1995-08-22', gender: 'female', bloodGroup: 'A+', address: 'GEC Circle, Chattagram', city: 'Chattagram', country: 'Bangladesh', allergies: [], chronicConditions: [], height: 158, weight: 55 },
+      { userId: patientUsers[2].id, dateOfBirth: '1985-12-10', gender: 'male', bloodGroup: 'O+', address: 'Nasirabad, Chattagram', city: 'Chattagram', country: 'Bangladesh', allergies: [], chronicConditions: [], height: 168, weight: 75 },
     ]);
-    console.log(`Created ${patientUsers.length} patients`);
-
-    const doctors = await Doctor.findAll();
+    console.log('Created 3 patients');
 
     // Appointments
-    const today = new Date();
-    const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
-    const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+    const doctors = await Doctor.findAll();
+    const today = new Date().toISOString().split('T')[0];
+    const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
 
     await Appointment.bulkCreate([
-      { patientId: patients[0].id, doctorId: doctors[0].id, appointmentDate: tomorrow.toISOString().split('T')[0], appointmentTime: '10:00:00', type: 'consultation', status: 'confirmed', reason: 'Chest pain and shortness of breath', fee: 1500 },
-      { patientId: patients[1].id, doctorId: doctors[1].id, appointmentDate: today.toISOString().split('T')[0], appointmentTime: '14:00:00', type: 'follow-up', status: 'completed', reason: 'Routine checkup', fee: 800 },
-      { patientId: patients[2].id, doctorId: doctors[2].id, appointmentDate: yesterday.toISOString().split('T')[0], appointmentTime: '11:00:00', type: 'consultation', status: 'completed', reason: 'Recurring headaches', fee: 1200 },
+      { patientId: patients[0].id, doctorId: doctors[0].id, appointmentDate: tomorrow, appointmentTime: '10:00:00', duration: 30, type: 'consultation', status: 'confirmed', reason: 'Chest pain and shortness of breath', fee: 1500 },
+      { patientId: patients[1].id, doctorId: doctors[1].id, appointmentDate: today, appointmentTime: '14:00:00', duration: 30, type: 'follow-up', status: 'completed', reason: 'Routine checkup', fee: 800 },
+      { patientId: patients[2].id, doctorId: doctors[2].id, appointmentDate: today, appointmentTime: '11:00:00', duration: 30, type: 'consultation', status: 'pending', reason: 'Recurring headaches', fee: 1200 },
     ]);
 
-    // Vital signs
+    // Vitals
     await VitalSign.bulkCreate([
-      { patientId: patients[0].id, recordedBy: patientUsers[0].id, bloodPressureSystolic: 130, bloodPressureDiastolic: 85, heartRate: 78, temperature: 37.0, oxygenSaturation: 98, weight: 70, height: 172, bmi: 23.66, bloodGlucose: 95, recordedAt: new Date() },
-      { patientId: patients[0].id, recordedBy: patientUsers[0].id, bloodPressureSystolic: 128, bloodPressureDiastolic: 83, heartRate: 75, temperature: 36.8, oxygenSaturation: 97, weight: 70.5, height: 172, bmi: 23.83, bloodGlucose: 92, recordedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
+      { patientId: patients[0].id, recordedBy: patientUsers[0].id, recordedAt: new Date(), bloodPressureSystolic: 130, bloodPressureDiastolic: 85, heartRate: 78, temperature: 37.0, oxygenSaturation: 98, weight: 70, height: 172, bmi: 23.66, bloodGlucose: 95 },
+      { patientId: patients[0].id, recordedBy: patientUsers[0].id, recordedAt: new Date(Date.now() - 7 * 86400000), bloodPressureSystolic: 128, bloodPressureDiastolic: 83, heartRate: 75, temperature: 36.8, oxygenSaturation: 97, weight: 70.5, height: 172, bmi: 23.83, bloodGlucose: 92 },
     ]);
 
     // Medications
     await Medication.bulkCreate([
-      { patientId: patients[0].id, name: 'Amlodipine', dosage: '5mg', frequency: 'once_daily', times: ['08:00'], startDate: new Date().toISOString().split('T')[0], instructions: 'Take with or without food', purpose: 'Blood pressure control', status: 'active' },
-      { patientId: patients[0].id, name: 'Aspirin', dosage: '75mg', frequency: 'once_daily', times: ['20:00'], startDate: new Date().toISOString().split('T')[0], instructions: 'Take after dinner', purpose: 'Blood thinner', status: 'active' },
+      { patientId: patients[0].id, name: 'Amlodipine', dosage: '5mg', frequency: 'once_daily', times: ['08:00'], startDate: today, instructions: 'Take with or without food', purpose: 'Blood pressure control', status: 'active' },
+      { patientId: patients[0].id, name: 'Aspirin', dosage: '75mg', frequency: 'once_daily', times: ['20:00'], startDate: today, instructions: 'Take after dinner', purpose: 'Blood thinner', status: 'active' },
     ]);
 
     console.log('\n✅ Seed completed successfully!');
-    console.log('\n📋 Test Credentials:');
     console.log('Admin:   admin@healthcare.com    | Admin@1234');
     console.log('Doctor:  rahman@healthcare.com   | Doctor@1234');
     console.log('Patient: patient@healthcare.com  | Patient@1234');
-    process.exit(0);
+
+    if (standalone) process.exit(0);
   } catch (error) {
-    console.error('Seed failed:', error);
-    process.exit(1);
+    console.error('Seed failed:', error.message);
+    if (standalone) process.exit(1);
   }
 };
 
-seedData();
+// Run standalone if called directly
+if (require.main === module) {
+  seedData(true);
+} else {
+  module.exports = seedData;
+}

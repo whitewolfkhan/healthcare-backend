@@ -126,12 +126,28 @@ app.use('*', (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
+const autoSeed = async () => {
+  try {
+    const { User } = require('./src/models');
+    const adminExists = await User.findOne({ where: { email: 'admin@healthcare.com' } });
+    if (!adminExists) {
+      logger.info('No seed data found. Running auto-seed...');
+      require('./src/utils/seed');
+    } else {
+      logger.info('Seed data already exists. Skipping auto-seed.');
+    }
+  } catch (err) {
+    logger.error('Auto-seed error:', err.message);
+  }
+};
+
 const startServer = async () => {
   try {
     await sequelize.authenticate();
     logger.info('Database connection established successfully.');
     await sequelize.sync({ alter: true });
     logger.info('Database synchronized.');
+    await autoSeed();
     app.listen(PORT, () => {
       logger.info(`Healthcare API server running on port ${PORT} in ${process.env.NODE_ENV} mode`);
     });
