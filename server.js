@@ -29,6 +29,9 @@ const notificationRoutes = require('./src/routes/notifications');
 
 const app = express();
 
+// Trust proxy — required for Render, Heroku, Vercel etc.
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(compression());
@@ -83,6 +86,22 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Healthcare API is running', timestamp: new Date().toISOString() });
+});
+
+// Manual seed trigger (one-time use)
+app.get('/api/run-seed', async (req, res) => {
+  try {
+    const { User } = require('./src/models');
+    const adminExists = await User.findOne({ where: { email: 'admin@healthcare.com' } });
+    if (adminExists) {
+      return res.json({ success: true, message: 'Seed already done. Admin exists.' });
+    }
+    const seedData = require('./src/utils/seed');
+    await seedData(false);
+    res.json({ success: true, message: 'Seed completed! You can now login.' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
 
 // API Routes
